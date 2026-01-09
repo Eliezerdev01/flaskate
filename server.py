@@ -1,20 +1,43 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from supabase import create_client, Client
 import hashlib
+import os
 
 app = FastAPI()
 
-# For this example, we use a dictionary. In production, 
-# this is where you'd connect to PostgreSQL or Supabase.
-fake_db = {"admin": hashlib.sha256("admin123".encode()).hexdigest()}
+# Get these from your Supabase Project Settings > API
+SUPABASE_URL = "https://your-project-id.supabase.co"
+SUPABASE_KEY = "your-anon-public-key"
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-class User(BaseModel):
+class UserData(BaseModel):
     username: str
     password: str
 
+@app.post("/register")
+def register(user: UserData):
+    hashed_pw = hashlib.sha256(user.password.encode()).hexdigest()
+    
+    # Insert into Supabase
+    response = supabase.table("users").insert({
+        "username": user.username, 
+        "password": hashed_pw
+    }).execute()
+    
+    return {"status": "success"}
+
 @app.post("/login")
-def login(user: User):
-    hashed_p = hashlib.sha256(user.password.encode()).hexdigest()
-    if user.username in fake_db and fake_db[user.username] == hashed_p:
-        return {"status": "success", "message": "Login successful"}
-    return {"status": "error", "message": "Invalid credentials"}
+def login(user: UserData):
+    hashed_pw = hashlib.sha256(user.password.encode()).hexdigest()
+    
+    # Query Supabase
+    response = supabase.table("users").select("*").eq("username", user.username).execute()
+    
+    if not response.data:
+        raise HTTPException(status_code=400, detail="User not found")
+    
+    if response.data[0]["password"] == hashed_pw:
+        return {"status": "success", "user": user.username}
+    
+    raise HTTPException(status_code=400, detail="Wrong password")
