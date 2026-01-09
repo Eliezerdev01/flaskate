@@ -7,8 +7,8 @@ import os
 app = FastAPI()
 
 # Get these from your Supabase Project Settings > API
-SUPABASE_URL = "https://your-project-id.supabase.co"
-SUPABASE_KEY = "your-anon-public-key"
+SUPABASE_URL = "https://hlfmolptnpcjzpviuqsf.supabase.co"
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 class UserData(BaseModel):
