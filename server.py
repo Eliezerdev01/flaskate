@@ -4,7 +4,6 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from supabase import create_client, Client
 from dotenv import load_dotenv
-
 # 1. Load local .env file if it exists (for local development)
 # Render will ignore this and use its own Environment Variables
 load_dotenv()
